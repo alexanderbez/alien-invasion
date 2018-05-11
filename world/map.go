@@ -90,7 +90,9 @@ func (m *Map) AddLink(cityName, linkDir, linkCity string) error {
 }
 
 // SeedAliens adds n aliens to the world map at pseudo random cities. At most
-// two aliens can occupy a city at any given time.
+// two aliens can occupy a city at any given time. It is assumed the number of
+// aliens to seed is valid and as such each alien will find a valid city to
+// occupy.
 func (m *Map) SeedAliens(n uint) {
 	m.rw.Lock()
 	defer m.rw.Unlock()
