@@ -33,7 +33,7 @@ type City struct {
 	south          string
 	east           string
 	west           string
-	alienOccupancy uint8
+	alienOccupancy []string
 }
 
 // NewMap returns a reference to a new initialized Map.
@@ -69,7 +69,7 @@ func (m *Map) AddLink(cityName, linkDir, linkCity string) error {
 	// Add the linked city to the map of cities
 	if _, ok := m.cities[linkCity]; !ok {
 		m.cityNames = append(m.cityNames, linkCity)
-		m.cities[linkCity] = &City{name: linkCity}
+		m.cities[linkCity] = &City{name: linkCity, alienOccupancy: make([]string, 0, 2)}
 	}
 
 	city := m.cities[cityName]
@@ -104,17 +104,19 @@ func (m *Map) SeedAliens(n uint) {
 	for i := uint(0); i < n; i++ {
 		var city *City
 
+		alienName := fmt.Sprintf("alien%d", i+1)
+
 		// Find a city the ith alien can occupy
 		for city == nil {
 			tmpCityName := m.cityNames[r.Intn(len(m.cityNames))]
 			tmpCity := m.cities[tmpCityName]
 
-			if tmpCity != nil && tmpCity.alienOccupancy < 2 {
+			if tmpCity != nil && len(tmpCity.alienOccupancy) < 2 {
 				city = tmpCity
 			}
 		}
 
-		city.alienOccupancy++
+		city.alienOccupancy = append(city.alienOccupancy, alienName)
 	}
 }
 
@@ -125,7 +127,7 @@ func (m *Map) String() (s string) {
 
 	for cityName, city := range m.cities {
 		s += fmt.Sprintf(
-			"{city: %s, links: [north: %s, south: %s, east: %s, west: %s], alienOccupancy: %d}\n",
+			"{city: %s, links: [north: %s, south: %s, east: %s, west: %s], alienOccupancy: %s}\n",
 			cityName, city.north, city.south, city.east, city.west, city.alienOccupancy,
 		)
 	}
