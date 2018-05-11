@@ -43,6 +43,7 @@ func main() {
 		log.Fatalf("invalid number of aliens: cannot have more than 2x of unique cities")
 	}
 
+	worldMap.SeedAliens(numAliens)
 	fmt.Println(worldMap)
 }
 
@@ -63,7 +64,7 @@ func buildWorldMap(mapFile string) (*world.Map, error) {
 
 	worldMap := world.NewMap()
 
-	// Create a scanner to read each map entry line by line.
+	// Create a scanner to read each map entry line by line
 	//
 	// Note: We assume the line entry can fit into the scanner's buffer
 	scanner := bufio.NewScanner(file)

@@ -2,8 +2,10 @@ package world
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -26,11 +28,12 @@ type Map struct {
 // City implements a city in a world map that contains a name and directional
 // links to other cities by name.
 type City struct {
-	name  string
-	north string
-	south string
-	east  string
-	west  string
+	name           string
+	north          string
+	south          string
+	east           string
+	west           string
+	alienOccupancy uint8
 }
 
 // NewMap returns a reference to a new initialized Map.
@@ -86,15 +89,42 @@ func (m *Map) AddLink(cityName, linkDir, linkCity string) error {
 	return nil
 }
 
+// SeedAliens adds n aliens to the world map at pseudo random cities. At most
+// two aliens can occupy a city at any given time.
+func (m *Map) SeedAliens(n uint) {
+	m.rw.Lock()
+	defer m.rw.Unlock()
+
+	// Initialize a PRNG
+	s := rand.NewSource(time.Now().Unix())
+	r := rand.New(s)
+
+	for i := uint(0); i < n; i++ {
+		var city *City
+
+		// Find a city the ith alien can occupy
+		for city == nil {
+			tmpCityName := m.cityNames[r.Intn(len(m.cityNames))]
+			tmpCity := m.cities[tmpCityName]
+
+			if tmpCity != nil && tmpCity.alienOccupancy < 2 {
+				city = tmpCity
+			}
+		}
+
+		city.alienOccupancy++
+	}
+}
+
 // String implements the stringer interface.
 func (m *Map) String() (s string) {
 	m.rw.RLock()
 	defer m.rw.RUnlock()
 
-	for cityName, links := range m.cities {
+	for cityName, city := range m.cities {
 		s += fmt.Sprintf(
-			"{city: %s, links: [north: %s, south: %s, east: %s, west: %s]}\n",
-			cityName, links.north, links.south, links.east, links.west,
+			"{city: %s, links: [north: %s, south: %s, east: %s, west: %s], alienOccupancy: %d}\n",
+			cityName, city.north, city.south, city.east, city.west, city.alienOccupancy,
 		)
 	}
 
