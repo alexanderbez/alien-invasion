@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -89,10 +88,7 @@ func buildWorldMap(mapFile string) (*world.Map, error) {
 				linkDir := linkTokens[0]
 				linkCity := linkTokens[1]
 
-				err := worldMap.AddLink(cityName, linkDir, linkCity)
-				if err != nil {
-					return nil, fmt.Errorf("failed to insert city link to map: %v", err)
-				}
+				worldMap.AddLink(cityName, linkDir, linkCity)
 			}
 		}
 	}
