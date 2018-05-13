@@ -119,8 +119,7 @@ func (m *Map) MoveAlien() error {
 		occupiedCity := alien.cityName
 		city := m.cities[occupiedCity]
 
-		// TODO: Shuffle city.outLinks
-		for _, linkCityName := range city.outLinks {
+		for _, linkCityName := range utils.ShuffleStrings(city.outLinks) {
 			linkCity := m.cities[linkCityName]
 
 			if len(linkCity.alienOccupancy) < MaxOccupancy {
