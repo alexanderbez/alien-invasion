@@ -85,10 +85,7 @@ func buildWorldMap(mapFile string) (*world.Map, error) {
 					return nil, errors.New("invalid line in map definition")
 				}
 
-				linkDir := linkTokens[0]
-				linkCity := linkTokens[1]
-
-				worldMap.AddLink(cityName, linkDir, linkCity)
+				worldMap.AddLink(cityName, linkTokens[1])
 			}
 		}
 	}
