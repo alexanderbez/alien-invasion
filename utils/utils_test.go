@@ -36,3 +36,21 @@ func TestRemoveStrFromSlice(t *testing.T) {
 		}
 	}
 }
+
+func TestShuffleStrings(t *testing.T) {
+	testCases := []struct {
+		src []string
+	}{
+		{
+			src: []string{"a", "b", "c", "d"},
+		},
+	}
+
+	for _, tc := range testCases {
+		r := ShuffleStrings(tc.src)
+
+		if reflect.DeepEqual(r, tc.src) {
+			t.Errorf("incorrect result: expected %v to be shuffled", tc.src)
+		}
+	}
+}
