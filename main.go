@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -15,19 +16,21 @@ import (
 func main() {
 	var (
 		mapFile   string
+		outFile   string
 		numAliens uint
 	)
 
 	flag.StringVar(&mapFile, "map", "", "file containing the map definition")
+	flag.StringVar(&outFile, "out", "", "output file to write resulting map to")
 	flag.UintVar(&numAliens, "n", 0, "number of aliens to use in the simulation")
 
 	flag.Parse()
 
 	if len(mapFile) == 0 {
 		log.Fatalln("invalid map definition: no file specified")
-	}
-
-	if numAliens == 0 {
+	} else if len(outFile) == 0 {
+		log.Fatalln("invalid output definition: no file specified")
+	} else if numAliens == 0 {
 		log.Fatalln("invalid number of aliens: must be greater than zero")
 	}
 
@@ -56,6 +59,10 @@ func main() {
 	}
 
 	log.Println("simulation complete")
+
+	if err := writeMapToFile(worldMap, outFile); err != nil {
+		log.Fatalf("failed to write map to file: %v", err)
+	}
 }
 
 // buildWorldMap builds a map from a give file. The map definition file has one
@@ -97,7 +104,7 @@ func buildWorldMap(mapFile string) (*world.Map, error) {
 					return nil, errors.New("invalid line in map definition")
 				}
 
-				worldMap.AddLink(cityName, linkTokens[1])
+				worldMap.AddLink(cityName, linkTokens[0], linkTokens[1])
 			}
 		}
 	}
@@ -107,4 +114,28 @@ func buildWorldMap(mapFile string) (*world.Map, error) {
 	}
 
 	return worldMap, nil
+}
+
+// writeMapToFile writes a given world map to the file at path 'outPath'. An
+// error is returned if the file cannot be created or written to.
+func writeMapToFile(worldMap *world.Map, outPath string) error {
+	fileHandle, err := os.Create(outPath)
+	if err != nil {
+		return err
+	}
+
+	defer fileHandle.Close()
+
+	writer := bufio.NewWriter(fileHandle)
+	defer fileHandle.Close()
+
+	for _, city := range worldMap.Cities() {
+		s := city.String()
+		if len(s) != 0 {
+			fmt.Fprintln(writer, s)
+			writer.Flush()
+		}
+	}
+
+	return nil
 }
