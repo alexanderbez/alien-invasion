@@ -7,16 +7,15 @@ import (
 	"strings"
 
 	"github.com/alexanderbez/alien-invasion/queue"
-	"github.com/alexanderbez/alien-invasion/utils"
 )
 
 const (
 	// MaxOccupancy reflects the maximum number of aliens that may occupy any
 	// given city.
 	MaxOccupancy = 2
-	// MaxOutDegree reflects the maximum number of out degree edges from a
-	// city. Only north, south, east, and west links can be made.
-	MaxOutDegree = 4
+	// MaxEdges reflects the maximum number of links (edges) from a city. Only
+	// north, south, east, and west links can be made.
+	MaxEdges = 4
 )
 
 // Map implements a representation of a world map. It's underlying
@@ -35,8 +34,8 @@ type Map struct {
 // overhead for certain operations.
 type City struct {
 	name           string
-	inLinks        []string
-	outLinks       []string
+	inLinks        map[string]string
+	outLinks       map[string]string
 	alienOccupancy map[string]*Alien
 }
 
@@ -47,6 +46,21 @@ func (c *City) Priority(other interface{}) bool {
 	}
 
 	return false
+}
+
+// String implements the Stringer interface.
+func (c *City) String() string {
+	if len(c.outLinks) == 0 {
+		return ""
+	}
+
+	links := ""
+
+	for linkDir, linkCityName := range c.outLinks {
+		links += fmt.Sprintf("%s=%s", linkDir, linkCityName)
+	}
+
+	return fmt.Sprintf("%s %s", c.name, links)
 }
 
 // NewMap returns a reference to a new initialized Map.
@@ -66,6 +80,17 @@ func (m *Map) AlienNames() []string {
 	}
 
 	return alienNames
+}
+
+// Cities returns all the cities in the map.
+func (m *Map) Cities() []*City {
+	cities := make([]*City, 0, len(m.cities))
+
+	for _, city := range m.cities {
+		cities = append(cities, city)
+	}
+
+	return cities
 }
 
 // NumCities returns the total number of unique cities in the Map.
@@ -94,13 +119,13 @@ func (m *Map) CityNames() []string {
 // If the origin city or linked city do not exist in the graph, they are
 // initialized and added. Finally, the out link is added to the origin city and
 // the in link is added to the linked city.
-func (m *Map) AddLink(cityName, linkCityName string) {
+func (m *Map) AddLink(cityName, linkCityDir, linkCityName string) {
 	// Add the origin city to the map of cities
 	if _, ok := m.cities[cityName]; !ok {
 		m.cities[cityName] = &City{
 			name:           cityName,
-			inLinks:        make([]string, 0, MaxOutDegree),
-			outLinks:       make([]string, 0, MaxOutDegree),
+			inLinks:        make(map[string]string, MaxEdges),
+			outLinks:       make(map[string]string, MaxEdges),
 			alienOccupancy: make(map[string]*Alien, MaxOccupancy),
 		}
 	}
@@ -109,15 +134,15 @@ func (m *Map) AddLink(cityName, linkCityName string) {
 	if _, ok := m.cities[linkCityName]; !ok {
 		m.cities[linkCityName] = &City{
 			name:           linkCityName,
-			inLinks:        make([]string, 0, MaxOutDegree),
-			outLinks:       make([]string, 0, MaxOutDegree),
+			inLinks:        make(map[string]string, MaxEdges),
+			outLinks:       make(map[string]string, MaxEdges),
 			alienOccupancy: make(map[string]*Alien, MaxOccupancy),
 		}
 	}
 
 	// Add outbound and inbound links (directional edges)
-	m.cities[cityName].outLinks = append(m.cities[cityName].outLinks, linkCityName)
-	m.cities[linkCityName].inLinks = append(m.cities[linkCityName].inLinks, cityName)
+	m.cities[cityName].outLinks[strings.ToLower(linkCityDir)] = linkCityName
+	m.cities[linkCityName].inLinks[strings.ToLower(linkCityDir)] = cityName
 }
 
 // MoveAlien attempts to move an alien on the map from one city to another
@@ -135,12 +160,12 @@ func (m *Map) AddLink(cityName, linkCityName string) {
 // moved alien is returned.
 func (m *Map) MoveAlien() (string, error) {
 	// We will get some pseudo randomness iterating over the city's list of
-	// aliens.
+	// aliens and out links.
 	for _, alien := range m.aliens {
 		occupiedCity := alien.cityName
 		city := m.cities[occupiedCity]
 
-		for _, linkCityName := range utils.ShuffleStrings(city.outLinks) {
+		for _, linkCityName := range city.outLinks {
 			linkCity := m.cities[linkCityName]
 
 			if len(linkCity.alienOccupancy) < MaxOccupancy {
@@ -173,8 +198,19 @@ func (m *Map) destroyCity(city *City) []string {
 	for _, inCityLinkName := range city.inLinks {
 		inCityLink := m.cities[inCityLinkName]
 
-		inCityLink.outLinks = utils.RemoveStrFromSlice(inCityLink.outLinks, city.name)
-		inCityLink.inLinks = utils.RemoveStrFromSlice(inCityLink.inLinks, city.name)
+		for linkDir, linkCityName := range inCityLink.outLinks {
+			if linkCityName == city.name {
+				delete(inCityLink.outLinks, linkDir)
+				break
+			}
+		}
+
+		for linkDir, linkCityName := range inCityLink.inLinks {
+			if linkCityName == city.name {
+				delete(inCityLink.inLinks, linkDir)
+				break
+			}
+		}
 	}
 
 	// Remove the destroyed city from any in links (inbound edges) from any city
@@ -182,7 +218,12 @@ func (m *Map) destroyCity(city *City) []string {
 	for _, outCityLinkName := range city.outLinks {
 		outCityLink := m.cities[outCityLinkName]
 
-		outCityLink.inLinks = utils.RemoveStrFromSlice(outCityLink.inLinks, city.name)
+		for linkDir, linkCityName := range outCityLink.inLinks {
+			if linkCityName == city.name {
+				delete(outCityLink.inLinks, linkDir)
+				break
+			}
+		}
 	}
 
 	delete(m.cities, city.name)

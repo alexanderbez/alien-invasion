@@ -84,6 +84,22 @@ func TestNumCities(t *testing.T) {
 	}
 }
 
+func TestCities(t *testing.T) {
+	m1 := buildMapFixtureEmpty()
+	c1 := m1.Cities()
+
+	if len(c1) != 0 {
+		t.Errorf("incorrect result: expected: %v, got: %v", 0, len(c1))
+	}
+
+	m2 := buildMapFixtureSimple()
+	c2 := m2.Cities()
+
+	if len(c2) != 2 {
+		t.Errorf("incorrect result: expected: %v, got: %v", 2, len(c1))
+	}
+}
+
 func TestNumAliens(t *testing.T) {
 	testCases := []struct {
 		m *Map
