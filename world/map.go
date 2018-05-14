@@ -57,6 +57,17 @@ func NewMap() *Map {
 	}
 }
 
+// AlienNames returns a unique list of all the aliens that exist in the map.
+func (m *Map) AlienNames() []string {
+	alienNames := make([]string, 0, len(m.aliens))
+
+	for alienName := range m.aliens {
+		alienNames = append(alienNames, alienName)
+	}
+
+	return alienNames
+}
+
 // NumCities returns the total number of unique cities in the Map.
 func (m *Map) NumCities() uint {
 	return uint(len(m.cities))
