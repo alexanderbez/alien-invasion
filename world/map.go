@@ -40,6 +40,15 @@ type City struct {
 	alienOccupancy map[string]*Alien
 }
 
+// Priority implements the Heapable interface.
+func (c *City) Priority(other interface{}) bool {
+	if t, ok := other.(*City); ok {
+		return len(c.outLinks) > len(t.outLinks)
+	}
+
+	return false
+}
+
 // NewMap returns a reference to a new initialized Map.
 func NewMap() *Map {
 	return &Map{
