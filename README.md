@@ -29,6 +29,13 @@ advantageous for these aliens to move about.
 
 ## Preliminary
 
+The simulation library is meant to run without any dependencies and solely relies
+on the Golang standard library! 
+
+### Requirements
+
+* [Go 1.9+](https://golang.org/dl/)
+
 ### Tests
 
 ```
