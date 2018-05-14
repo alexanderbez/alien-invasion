@@ -26,8 +26,8 @@ func buildMapFixtureSimple() *Map {
 		cities: map[string]*City{
 			"foo": &City{
 				name:     "foo",
-				inLinks:  []string{"bar"},
-				outLinks: []string{"bar"},
+				inLinks:  map[string]string{"south": "bar"},
+				outLinks: map[string]string{"north": "bar"},
 				alienOccupancy: map[string]*Alien{
 					a1.name: a1,
 					a2.name: a2,
@@ -35,8 +35,8 @@ func buildMapFixtureSimple() *Map {
 			},
 			"bar": &City{
 				name:     "bar",
-				inLinks:  []string{"foo"},
-				outLinks: []string{"foo"},
+				inLinks:  map[string]string{"north": "foo"},
+				outLinks: map[string]string{"south": "foo"},
 				alienOccupancy: map[string]*Alien{
 					a3.name: a3,
 					a4.name: a4,
@@ -176,7 +176,7 @@ func TestCityNames(t *testing.T) {
 
 func TestAddLink(t *testing.T) {
 	m1 := buildMapFixtureEmpty()
-	m1.AddLink("foo", "bar")
+	m1.AddLink("foo", "north", "bar")
 
 	if _, ok := m1.cities["foo"]; !ok {
 		t.Errorf("expected %s to exist in map cities", "foo")
@@ -186,12 +186,14 @@ func TestAddLink(t *testing.T) {
 		t.Errorf("expected %s to exist in map cities", "foo")
 	}
 
-	if !reflect.DeepEqual(m1.cities["foo"].outLinks, []string{"bar"}) {
-		t.Errorf("expected %s city to have valid out links: %v", "foo", []string{"bar"})
+	e := map[string]string{"north": "bar"}
+	if !reflect.DeepEqual(m1.cities["foo"].outLinks, e) {
+		t.Errorf("expected %s city to have valid out links: %v", "foo", e)
 	}
 
-	if !reflect.DeepEqual(m1.cities["bar"].inLinks, []string{"foo"}) {
-		t.Errorf("expected %s linked city to have valid in links: %v", "bar", []string{"foo"})
+	e = map[string]string{"north": "foo"}
+	if !reflect.DeepEqual(m1.cities["bar"].inLinks, e) {
+		t.Errorf("expected %s linked city to have valid in links: %v", "bar", e)
 	}
 }
 
@@ -203,7 +205,7 @@ func TestMoveAlien(t *testing.T) {
 	}
 
 	m2 := buildMapFixtureSimple()
-	m2.AddLink("foo", "qu-ux")
+	m2.AddLink("foo", "south", "qu-ux")
 
 	if _, err := m2.MoveAlien(); err != nil {
 		t.Errorf("unexpected error: alien should be able to move")
@@ -238,7 +240,6 @@ func TestDestroyCity(t *testing.T) {
 	}
 
 	c = m.cities["bar"]
-
 	if len(c.outLinks) != 0 {
 		t.Errorf("expected linked city %s to not have destroyed city %s as an out link", "bar", "foo")
 	}
@@ -264,11 +265,11 @@ func TestExecuteFights(t *testing.T) {
 func TestSeedAliens(t *testing.T) {
 	m := buildMapFixtureEmpty()
 
-	m.AddLink("foo", "bar")
-	m.AddLink("foo", "qu-ux")
-	m.AddLink("foo", "baz")
-	m.AddLink("bar", "foo")
-	m.AddLink("bar", "bee")
+	m.AddLink("foo", "north", "bar")
+	m.AddLink("foo", "south", "qu-ux")
+	m.AddLink("foo", "west", "baz")
+	m.AddLink("bar", "south", "foo")
+	m.AddLink("bar", "west", "bee")
 
 	m.SeedAliens(0)
 
@@ -286,11 +287,11 @@ func TestSeedAliens(t *testing.T) {
 func TestSeedAliensPriority(t *testing.T) {
 	m := buildMapFixtureEmpty()
 
-	m.AddLink("foo", "bar")
-	m.AddLink("foo", "qu-ux")
-	m.AddLink("foo", "baz")
-	m.AddLink("bar", "foo")
-	m.AddLink("bar", "bee")
+	m.AddLink("foo", "north", "bar")
+	m.AddLink("foo", "south", "qu-ux")
+	m.AddLink("foo", "west", "baz")
+	m.AddLink("bar", "south", "foo")
+	m.AddLink("bar", "west", "bee")
 
 	m.SeedAliens(4)
 
