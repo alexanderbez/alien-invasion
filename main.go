@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/alexanderbez/alien-invasion/simulation"
 	"github.com/alexanderbez/alien-invasion/world"
 )
 
@@ -42,8 +43,19 @@ func main() {
 		log.Fatalf("invalid number of aliens: cannot have more than 2x of unique cities")
 	}
 
+	// Seed the map with 'n' aliens scattered randomly throughout the city and
+	// invoke an initial series of alien fights where a search of the map
+	// (graph) is done looking for city alien occupation equal to MaxOccupancy.
 	worldMap.SeedAliens(numAliens)
-	fmt.Println(worldMap)
+	worldMap.ExecuteFights()
+
+	sim := simulation.NewSimulation(worldMap)
+
+	if err := sim.Run(); err != nil {
+		log.Fatalf("failed to execute alien invasion simulation: %v", err)
+	}
+
+	log.Println("simulation complete")
 }
 
 // buildWorldMap builds a map from a give file. The map definition file has one
