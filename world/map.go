@@ -130,8 +130,10 @@ func (m *Map) AddLink(cityName, linkCityName string) {
 // 2c. Add alien to new city
 // 3. Otherwise, continue evaluating other out links. If no links are valid,
 // then try another alien.
-// 4. If no alien can be moved, an error is returned.
-func (m *Map) MoveAlien() error {
+//
+// If no alien can be moved, an error is returned. Otherwise, the name of the
+// moved alien is returned.
+func (m *Map) MoveAlien() (string, error) {
 	// We will get some pseudo randomness iterating over the city's list of
 	// aliens.
 	for _, alien := range m.aliens {
@@ -147,12 +149,12 @@ func (m *Map) MoveAlien() error {
 				alien.cityName = linkCity.name
 				linkCity.alienOccupancy[alien.name] = alien
 
-				return nil
+				return alien.name, nil
 			}
 		}
 	}
 
-	return errors.New("unable to move any alien")
+	return "", errors.New("unable to move any alien")
 }
 
 // destroyCity removes a given city from the map (directed graph) in addition
