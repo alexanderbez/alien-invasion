@@ -108,6 +108,29 @@ func TestNumAliens(t *testing.T) {
 	}
 }
 
+func TestAlienNames(t *testing.T) {
+	m1 := buildMapFixtureEmpty()
+
+	if len(m1.AlienNames()) != 0 {
+		t.Errorf("incorrect result: expected: %v, got: %v", 0, len(m1.AlienNames()))
+	}
+
+	m2 := buildMapFixtureSimple()
+	e := make([]string, 0, len(m2.aliens))
+	r := m2.AlienNames()
+
+	for a := range m2.aliens {
+		e = append(e, a)
+	}
+
+	sort.Strings(e)
+	sort.Strings(r)
+
+	if !reflect.DeepEqual(r, e) {
+		t.Errorf("incorrect result: expected: %v, got: %v", r, e)
+	}
+}
+
 func TestCityNames(t *testing.T) {
 	testCases := []struct {
 		m *Map
@@ -159,14 +182,14 @@ func TestAddLink(t *testing.T) {
 func TestMoveAlien(t *testing.T) {
 	m1 := buildMapFixtureEmpty()
 
-	if err := m1.MoveAlien(); err == nil {
+	if _, err := m1.MoveAlien(); err == nil {
 		t.Errorf("expected error: no aliens to move in empty map")
 	}
 
 	m2 := buildMapFixtureSimple()
 	m2.AddLink("foo", "qu-ux")
 
-	if err := m2.MoveAlien(); err != nil {
+	if _, err := m2.MoveAlien(); err != nil {
 		t.Errorf("unexpected error: alien should be able to move")
 	}
 }
@@ -241,5 +264,35 @@ func TestSeedAliens(t *testing.T) {
 
 	if len(m.aliens) != 10 {
 		t.Errorf("expected map to have correct number of aliens: got: %d, expected: %d", len(m.aliens), 10)
+	}
+}
+
+func TestSeedAliensPriority(t *testing.T) {
+	m := buildMapFixtureEmpty()
+
+	m.AddLink("foo", "bar")
+	m.AddLink("foo", "qu-ux")
+	m.AddLink("foo", "baz")
+	m.AddLink("bar", "foo")
+	m.AddLink("bar", "bee")
+
+	m.SeedAliens(4)
+
+	if len(m.aliens) != 4 {
+		t.Errorf("expected map to have correct number of aliens: got: %d, expected: %d", len(m.aliens), 4)
+	}
+
+	if len(m.cities["foo"].alienOccupancy) != 2 {
+		t.Errorf("expected map to have correct number of aliens for priority city: got: %d, expected: %d",
+			len(m.cities["foo"].alienOccupancy),
+			2,
+		)
+	}
+
+	if len(m.cities["bar"].alienOccupancy) != 2 {
+		t.Errorf("expected map to have correct number of aliens for priority city: got: %d, expected: %d",
+			len(m.cities["bar"].alienOccupancy),
+			2,
+		)
 	}
 }
