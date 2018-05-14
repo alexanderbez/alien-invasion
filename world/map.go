@@ -4,10 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"strings"
-	"time"
 
+	"github.com/alexanderbez/alien-invasion/queue"
 	"github.com/alexanderbez/alien-invasion/utils"
 )
 
@@ -195,48 +194,36 @@ func (m *Map) ExecuteFights() {
 }
 
 // SeedAliens adds n aliens to the world map at pseudo random cities. At most
-// two aliens can occupy a city at any given time. It is assumed the number of
-// aliens to seed is valid and as such each alien will find a valid city to
-// occupy. Alien occupancy is preferred in cities with out roads (out edges).
+// 'MaxOccupancy' aliens can occupy a city at any given time. It is assumed the
+// number of aliens to seed is valid and as such each alien will find a valid
+// city to occupy. Alien occupancy is preferred in cities with out roads
+// (out edges).
 func (m *Map) SeedAliens(n uint) {
-	// Initialize a PRNG using the current time as a seed
-	s := rand.NewSource(time.Now().Unix())
-	r := rand.New(s)
+	pq := queue.NewPriorityQueue()
 
-	cityNames := m.CityNames()
-	totalCities := m.NumCities()
+	// Add all the cities pseudo-randomly to a priority queue. Priority is
+	// based on the total number of out degree links of a city.
+	for _, city := range m.cities {
+		pq.Push(city)
+	}
 
-	for i := uint(0); i < n; i++ {
-		var city *City
+	// We assume the invariant that there are enough cities to occupy all 'n'
+	// aliens.
+	seededAliens := uint(0)
+	for seededAliens != n {
+		city := pq.Pop().(*City)
 
-		citiesChecked := uint(0)
-
-		for city == nil {
-			tmpCityName := cityNames[r.Intn(len(cityNames))]
-			tmpCity := m.cities[tmpCityName]
-
-			if len(tmpCity.alienOccupancy) < MaxOccupancy {
-				citiesChecked++
-
-				// Alien occupancy should prefer cities with outbound links
-				if len(tmpCity.outLinks) > 0 {
-					city = tmpCity
-				} else if citiesChecked >= totalCities {
-					// Check to see if we've exhausted the total number of cities
-					// checked for occupancy, if so, allow the alien to occupy a
-					// trapped city.
-					city = tmpCity
-				}
+		for i := 0; i < MaxOccupancy && seededAliens != n; i++ {
+			alien := &Alien{
+				name:     fmt.Sprintf("alien%d", seededAliens+1),
+				cityName: city.name,
 			}
-		}
 
-		alien := &Alien{
-			name:     fmt.Sprintf("alien%d", i+1),
-			cityName: city.name,
-		}
+			city.alienOccupancy[alien.name] = alien
+			m.aliens[alien.name] = alien
 
-		city.alienOccupancy[alien.name] = alien
-		m.aliens[alien.name] = alien
+			seededAliens++
+		}
 	}
 }
 
