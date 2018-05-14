@@ -27,11 +27,11 @@ func main() {
 	flag.Parse()
 
 	if len(mapFile) == 0 {
-		log.Fatalln("invalid map definition: no file specified")
+		cmdErrorMsg("invalid map definition: no file specified")
 	} else if len(outFile) == 0 {
-		log.Fatalln("invalid output definition: no file specified")
+		cmdErrorMsg("invalid output definition: no file specified")
 	} else if numAliens == 0 {
-		log.Fatalln("invalid number of aliens: must be greater than zero")
+		cmdErrorMsg("invalid number of aliens: must be greater than zero")
 	}
 
 	worldMap, err := buildWorldMap(mapFile)
@@ -63,6 +63,13 @@ func main() {
 	if err := writeMapToFile(worldMap, outFile); err != nil {
 		log.Fatalf("failed to write map to file: %v", err)
 	}
+}
+
+func cmdErrorMsg(errMsg string) {
+	fmt.Printf("%s\n\n", errMsg)
+	fmt.Println("usage:")
+	flag.PrintDefaults()
+	os.Exit(1)
 }
 
 // buildWorldMap builds a map from a give file. The map definition file has one
