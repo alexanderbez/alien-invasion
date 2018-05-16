@@ -57,10 +57,10 @@ func (c *City) String() string {
 	links := ""
 
 	for linkDir, linkCityName := range c.outLinks {
-		links += fmt.Sprintf("%s=%s", linkDir, linkCityName)
+		links += fmt.Sprintf(" %s=%s", linkDir, linkCityName)
 	}
 
-	return fmt.Sprintf("%s %s", c.name, links)
+	return fmt.Sprintf("%s%s", c.name, links)
 }
 
 // NewMap returns a reference to a new initialized Map.
